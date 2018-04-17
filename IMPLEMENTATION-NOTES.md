@@ -4,16 +4,17 @@
 <a name="1"></a>
 ## 1. Overview
 
-The file [lisp.go](lisp.go) is a translation of `lisp.dart` of
-[lisp-in-dart](https://github.com/nukata/lisp-in-dart).
-For simplicity of Go, it restricts numbers to `float64` only,
-while it enjoys the concurrent computations of `future` and `force` implemented with _goroutine_.
+The Lisp implementation of [lisp.go](lisp.go) is a translation of lisp.dart 
+at [lisp-in-dart](https://github.com/nukata/lisp-in-dart).
+For simplicity of Go, lisp.go restricts numbers in Lisp to `float64` only,
+while it enjoys the concurrent computations of `future` and `force` 
+implemented with _goroutine_.
 
 ----------------------------------------
 
 **Note:**
 Below is an example of running the Lisp interpreter.
-If you have a Go compiler, you can try the Lisp right away without any preparations!
+If you have a Go compiler, you can try it right away without any preparations!
 
 ```
 $ go build lisp.go
@@ -26,11 +27,7 @@ $
 
 ----------------------------------------
 
-<a name="2"></a>
-## 2. Features
-
-
-Some features of the implementation common to lisp-in-dart are:
+Some features common to lisp.go and lisp.dart are
 
 - It is basically a subset of Emacs Lisp.  However, it is a Lisp-1 with static scoping.
   In other words, it is a Common Lisp-like Lisp-1.
@@ -41,8 +38,8 @@ Some features of the implementation common to lisp-in-dart are:
 
 - A circular list is printed with `...` finitely.
 
-- As an escape sequence within strings, you can use any of:
-  `\"` `\\` `\n` `\r` `\f` `\b` `\t` `\v` <!-- " -->
+- As an escape sequence within strings, you can use any of
+  `\"`, `\\`, `\n`, `\r`, `\f`, `\b`, `\t`, `\v`.
 
 - `(dump)` returns a list of all global variables
   (which does not include special forms such as `lambda` and `setq`
@@ -51,11 +48,11 @@ Some features of the implementation common to lisp-in-dart are:
 - `*version*` has a value of 3-elements list: the version number, the implementing 
   language, and the name of implementation.
 
-- The special form `(macro` <i>args</i> <i>body</i> `)` evaluates to an anonymous 
-  function, which is called a macro expression, in the global environment.
+- The special form (`macro` _args_ _body_) evaluates to an anonymous 
+  function, or _macro expression_, in the global environment.
   When you apply the macro expression to a list of actual arguments, the arguments 
   will not be evaluated and the result of the application will be evaluated again.
-  A variable bound to a macro expression works as a macro.
+  A variable bound to a macro expression works as a _macro_.
 
 - `defmacro` is a macro which binds a variable to a macro expression.
 
@@ -76,13 +73,11 @@ See [lisp-in-dart/IMPLEMENTATION-NOTES §5](https://github.com/nukata/lisp-in-da
 ----------------------------------------
 
 **Note:**
-I believe this feature delivers the ideal behavior for a Lisp-1 Lisp, 
-which has one name space for both variables and functions, to make use 
-of traditional macros.
-As a benefit of macros being _partially hygienic_, you can define
+I believe the last feature makes the behavior of traditional macros ideal.
+As macros being _partially hygienic_, you can define
 [anaphoric macros](http://www.asahi-net.or.jp/~kc7k-nd/onlispjhtml/anaphoricMacros.html)
-by introducing a symbol (`it` in the following example) not by using `(gensym)` 
-insistently to the expansion result.
+(Japanese) by introducing a symbol (`it` in the following example) to the expansion
+result intentionally without using `(gensym)`.
 
 ```
 > (defmacro aif (test then else)
@@ -99,7 +94,7 @@ aif
 
 ----------------------------------------
 
-A restriction not common to lisp-in-dart:
+A restriction of lisp.go compared to lisp.dart is
 
 
 - All numbers are represented by double precision floating point numbers (`float64` in Go).
@@ -121,23 +116,16 @@ in the famous [Caml Light](http://caml.inria.fr/caml-light/).
 
 ----------------------------------------
 
-In addition, a feature common to
-[my first Go Lisp](https://github.com/pkelchte/tiny-lisp) in 2013 is:
+In addition, a feature inherited from
+[my first Go Lisp in 2013](https://github.com/pkelchte/tiny-lisp) is
 
-- It delivers concurrent computations with goroutines by the special form 
-  `(future` _expression_`)` and the function `(force` _promise_`)`.
+- Concurrent computations with goroutines are delivered by the special form 
+  (`future` _expression_) and the function (`force` _future_).
+  See ["Futures and promises" at Wikipedia](https://en.wikipedia.org/wiki/Futures_and_promises).
 
-
-----------------------------------------
-
-**Note:**
 The following example calculates 
 [Fibonacci numbers](https://oeis.org/A000045)
-concurrently.
-
-It computes `(fib (- n 1))` and `(fib (- n 2))` 
-in each goroutine separately and adds the results 
-by `(+ (force a) (force b))`.
+concurrently, though it may be too fine-grained to be efficient.
 
 ```
 > (defun fib (n)
@@ -157,15 +145,15 @@ fib
 > 
 ```
 
-----------------------------------------
+`fib` computes `(fib (- n 1))` and `(fib (- n 2))` 
+in each goroutine separately and adds the results 
+by `(+ (force a) (force b))`.
 
 
-<a name="3"></a>
-## 3. Inner Representations of Data
 
-The inner representations of data are the same as the previous implementation 
-except for numbers.
-All numbers are represented by `float64`.
+<a name="2"></a>
+## 2. Inner Representations of Data
+
 To represent data of the implemented language (Lisp), native types of the 
 implementing language (Go) are used as they are as possible.
 They are all treated as `interface{}`.
@@ -233,8 +221,8 @@ func NewSym2(name string, isKeyword bool) *Sym {
 ```
 
 
-<a name="4"></a>
-## 4. Implementations of some major Lisp functions
+<a name="3"></a>
+## 3. Implementations of Lisp functions
 
 The core of Lisp interpreter is represented by the structure `Interp`.
 It consists of a map for global variables and an exclusive lock for the map.
@@ -306,7 +294,7 @@ func NewInterp() *Interp {
 ```
 
 The function `dump` takes no arguments and returns a list of all global variables.
-Read-locking with `RLock`/`RUnlock`, the implementation of `(dump)` 
+While read-locking with `RLock`/`RUnlock`, the implementation of `(dump)` 
 reads the keys from the map `globals` held by the `Interp` object and constructs 
 a list of them.
 
@@ -337,10 +325,6 @@ cdr dotimes cdddr cdadr cdar car while _append if >= print exit *gensym-counter*
 aar mod mapcar eql rplaca terpri numberp rplacd atom null identity cddar)
 > 
 ```
-
-Neither `setq` nor `lambda` occur here since they are special forms,
-while `defun`, `defmacro` and `let` occur here since they are global 
-variables bound to macro expressions.
 
 ----------------------------------------
 
