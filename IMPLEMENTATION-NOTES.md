@@ -7,14 +7,11 @@
 The Lisp implementation of [lisp.go](lisp.go) is a translation of lisp.dart 
 at [lisp-in-dart](https://github.com/nukata/lisp-in-dart).
 For simplicity of Go, lisp.go restricts numbers in Lisp to `float64` only,
-while it enjoys the concurrent computations of `future` and `force` 
+while it provides the concurrent computations of `future` and `force` 
 implemented with _goroutine_.
 
-----------------------------------------
-
-**Note:**
-Below is an example of running the Lisp interpreter.
-If you have a Go compiler, you can try it right away without any preparations!
+Below is an example of running lisp.go.
+If you have a Go compiler, you can try Lisp right away without any preparations.
 
 ```
 $ go build lisp.go
@@ -25,12 +22,10 @@ $ ./lisp
 $ 
 ```
 
-----------------------------------------
-
 Some features common to lisp.go and lisp.dart are
 
 - It is basically a subset of Emacs Lisp.  However, it is a Lisp-1 with static scoping.
-  In other words, it is a Common Lisp-like Lisp-1.
+  So it is a _Common Lisp-like Lisp-1_.
 
 - It makes proper tail calls always.
 
@@ -310,10 +305,7 @@ a list of them.
 	})
 ```
 
-----------------------------------------
-
-**Note:**
-Below is an example of running `(dump)`.
+The following shows an example of running `(dump)`.
 
 ```
 > (dump)
@@ -325,8 +317,6 @@ cdr dotimes cdddr cdadr cdar car while _append if >= print exit *gensym-counter*
 aar mod mapcar eql rplaca terpri numberp rplacd atom null identity cddar)
 > 
 ```
-
-----------------------------------------
 
 Several functions and macros of Lisp are defined within 
 the initialization script `Prelude`.
@@ -392,10 +382,7 @@ var Prelude = strings.Replace(`
 (defun cddr (x) (cdr (cdr x)))
 ```
 
-Below is the tail of `Prelude`.
-Since "``` ` ```" cannot occur in a raw string literal of Go, "`~`" 
-is substituted for it.
-Each  "`~`" will be replaced by "``` ` ```" at runtime with `strings.Replace`.
+The tail of `Prelude` is as follows:
 
 ```Lisp
 (defmacro dotimes (spec &rest body) ; (dotimes (name count [result]) body...)
@@ -410,3 +397,7 @@ Each  "`~`" will be replaced by "``` ` ```" at runtime with `strings.Replace`.
              ~(,(caddr spec))))))
 `, "~", "`", -1)
 ```
+
+Since "``` ` ```" cannot occur within a raw string literal of Go,
+"`~`" substitues for it.
+Each  "`~`" will be replaced by "``` ` ```" at runtime with `strings.Replace`.
