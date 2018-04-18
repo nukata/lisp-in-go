@@ -151,21 +151,21 @@ by `(+ (force a) (force b))`.
 
 
 <a name="2"></a>
-## 2. Inner Representations of Data
+## 2. Internal Data Representation
 
 To represent data of the implemented language (Lisp), native types of the 
-implementing language (Go) are used as they are as possible.
-They are all treated as `interface{}`.
+implementing language (Go) are used as they are, if possible.
+They are all treated as `interface{}` uniformly.
 
 
-| Lisp Expression                     | Inner Representation                   |
+| Lisp Expression                     | Internal Representation                |
 |:------------------------------------|:---------------------------------------|
 | numbers `1`, `2.3`                  | `float64`                              |
 | strings `"abc"`, `"hello!\n"`       | `string`                               |
 | `t`                                 | `true`                                 |
 | `nil`                               | `nil` of `*Cell`                       |
 | symbols `x`, `+`                    | `Sym` (user-defined)                   |
-| keywords `lambda`, `cond`           | `Sym` (`Iskeyword` flag is true)       |
+| keywords `lambda`, `cond`           | `Sym` (`IsKeyword` flag is `true`)     |
 | lists `(x 1 "2")`, `(y . 3)`        | `Cell` (user-defined)                  |
 
 Below is the definition of the type `Cell`.
@@ -196,7 +196,7 @@ type Sym struct {
 
 A `map` is used to intern symbols.
 Exclusive locking of `Lock`/`Unlock` is performed here for the sake of 
-the concurrent computations with goroutines.
+concurrent computations with goroutines.
 
 ```Go
 // symbols is a table of interned symbols.
