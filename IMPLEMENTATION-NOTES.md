@@ -7,8 +7,8 @@
 The Lisp implementation of [lisp.go](lisp.go) is a translation of lisp.dart 
 at [lisp-in-dart](https://github.com/nukata/lisp-in-dart).
 For simplicity of Go, lisp.go restricts numbers in Lisp to `float64` only,
-while it provides the concurrent computations of `future` and `force` 
-implemented with _goroutine_.
+while it provides `future` and `force` for concurrent computation with
+_goroutines_.
 
 Below is an example of running lisp.go.
 If you have a Go compiler, you can try Lisp right away without any preparations.
@@ -24,8 +24,9 @@ $
 
 Some features common to lisp.go and lisp.dart are
 
-- It is basically a subset of Emacs Lisp.  However, it is a Lisp-1 with static scoping.
-  So it is a _Common Lisp-like Lisp-1_.
+- It is basically a subset of Emacs Lisp.
+  However, it is a Lisp-1 with static scoping.
+  In short, it is a _Common Lisp-like Lisp-1_.
 
 - It makes proper tail calls always.
 
@@ -40,29 +41,31 @@ Some features common to lisp.go and lisp.dart are
   (which does not include special forms such as `lambda` and `setq`
   since they are not variables).
 
-- `*version*` has a value of 3-elements list: the version number, the implementing 
-  language, and the name of implementation.
+- `*version*` is a three-element list: 
+  the (internal) version number, the implementing language, 
+  and the name of implementation.
 
 - The special form (`macro` _args_ _body_) evaluates to an anonymous 
   function, or _macro expression_, in the global environment.
-  When you apply the macro expression to a list of actual arguments, the arguments 
-  will not be evaluated and the result of the application will be evaluated again.
+  When you apply the macro expression to a list of actual arguments,
+  the arguments will not be evaluated and the result of the application
+  will be evaluated again.
   A variable bound to a macro expression works as a _macro_.
 
 - `defmacro` is a macro which binds a variable to a macro expression.
 
 - `defun` is a macro which binds a variable to a lambda expression.
 
-- `let` is a macro which applies a lambda expression to a list of initial values 
-  of variables.
+- `let` is a macro which applies a lambda expression to a list of initial
+  values of variables.
 
-- Free symbols within a macro expression will not be captured when the expression 
-  is applied (i.e., when the macro is expanded).
+- Free symbols within a macro expression will not be captured when the
+  expression is applied (i.e., when the macro is expanded).
 
 
-By the last feature above, you can avoid variable captures in any macro definitions, 
-provided that you use the result of `(gensym)` for any symbol newly introduced to 
-the expansion result.
+By the last feature above, you can avoid variable captures in any macro
+definitions, provided that you use the result of `(gensym)` for any symbol
+newly introduced to the expansion result.
 See [lisp-in-dart/IMPLEMENTATION-NOTES §5](https://github.com/nukata/lisp-in-dart/blob/master/IMPLEMENTATION-NOTES.md#5).
 
 ----------------------------------------
@@ -71,8 +74,8 @@ See [lisp-in-dart/IMPLEMENTATION-NOTES §5](https://github.com/nukata/lisp-in-da
 I believe the last feature makes the behavior of traditional macros ideal.
 As macros being _partially hygienic_, you can define
 [anaphoric macros](http://www.asahi-net.or.jp/~kc7k-nd/onlispjhtml/anaphoricMacros.html)
-(Japanese) by introducing a symbol (`it` in the following example) to the expansion
-result intentionally without using `(gensym)`.
+(Japanese) by introducing a symbol (`it` in the following example) to the 
+expansion result intentionally without using `(gensym)`.
 
 ```
 > (defmacro aif (test then else)
@@ -92,7 +95,8 @@ aif
 A restriction of lisp.go compared to lisp.dart is
 
 
-- All numbers are represented by double precision floating point numbers (`float64` in Go).
+- All numbers are represented by double precision floating point numbers
+  (`float64` in Go).
 
 
 ----------------------------------------
@@ -111,8 +115,8 @@ in the famous [Caml Light](http://caml.inria.fr/caml-light/).
 
 ----------------------------------------
 
-In addition, a feature inherited from
-[my first Go Lisp in 2013](https://github.com/pkelchte/tiny-lisp) is
+In addition, there is a feature inherited from
+[my first Go Lisp in 2013](https://github.com/pkelchte/tiny-lisp):
 
 - Concurrent computations with goroutines are delivered by the special form 
   (`future` _expression_) and the function (`force` _future_).
@@ -288,10 +292,11 @@ func NewInterp() *Interp {
 	})
 ```
 
-The function `dump` takes no arguments and returns a list of all global variables.
+The function `dump` takes no arguments and returns a list of all global
+variables.
 While read-locking with `RLock`/`RUnlock`, the implementation of `(dump)` 
-reads the keys from the map `globals` held by the `Interp` object and constructs 
-a list of them.
+reads the keys from the map `globals` held by the `Interp` object and
+constructs a list of them.
 
 ```Go
 	interp.Def("dump", 0, func(a []interface{}) interface{} {
@@ -305,7 +310,7 @@ a list of them.
 	})
 ```
 
-The following shows an example of running `(dump)`.
+Below is an example of running `(dump)`.
 
 ```
 > (dump)
