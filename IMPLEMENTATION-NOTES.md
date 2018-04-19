@@ -37,20 +37,21 @@ Some features common to lisp.go and lisp.dart are
 - As an escape sequence within strings, you can use any of
   `\"`, `\\`, `\n`, `\r`, `\f`, `\b`, `\t`, `\v`.
 
-- `(dump)` returns a list of all global variables
-  (which does not include special forms such as `lambda` and `setq`
-  since they are not variables).
+- `(dump)` returns a list of all global variables.
+  The list does not include special forms such as `lambda` and `setq`
+  since they are not variables.
 
 - `*version*` is a three-element list: 
   the (internal) version number, the implementing language, 
   and the name of implementation.
 
-- The special form (`macro` _args_ _body_) evaluates to an anonymous 
-  function, or _macro expression_, in the global environment.
-  When you apply the macro expression to a list of actual arguments,
+- (`macro` _args_ _body_) is a special form that evaluates to a sort of
+  anonymous function, or _macro expression_.
+  The global environment will be used whenever (`macro` ...) evaluates.
+  When you apply the resultant macro expression to a list of actual arguments,
   the arguments will not be evaluated and the result of the application
   will be evaluated again.
-  A variable bound to a macro expression works as a _macro_.
+  Thus a variable bound to a macro expression works as a _macro_.
 
 - `defmacro` is a macro which binds a variable to a macro expression.
 
@@ -193,12 +194,16 @@ type Sym struct {
 }
 ```
 
-
-A `map` is used to intern symbols.
-Exclusive locking of `Lock`/`Unlock` is performed here for the sake of 
+The map `symbols` is used to intern symbols.
+The mutex `symLock` guards access to `symbols` in
 concurrent computations with goroutines.
 
 ```Go
+// NewSym constructs an interned symbol for name.
+func NewSym(name string) *Sym {
+	return NewSym2(name, false)
+}
+
 // symbols is a table of interned symbols.
 var symbols = make(map[string]*Sym)
 
@@ -249,9 +254,9 @@ func (interp *Interp) Def(name string, carity int,
 }
 ```
 
-Below is the head of the function `NewInterp` corresponding to the 
+Below is an excerpt of the function `NewInterp` corresponding to the 
 constructor of `Interp`.
-This excerpt shows the implementation of five basic functions of Lisp.
+It shows the implementation of five elementary functions of Lisp.
 
 ```Go
 // NewInterp constructs an interpreter and sets built-in functions etc. as
@@ -294,9 +299,8 @@ func NewInterp() *Interp {
 
 The function `dump` takes no arguments and returns a list of all global
 variables.
-While read-locking with `RLock`/`RUnlock`, the implementation of `(dump)` 
-reads the keys from the map `globals` held by the `Interp` object and
-constructs a list of them.
+Within read-lock of `interp.lock`, `dump` reads the keys from `interp.globals`
+and constructs a list of them.
 
 ```Go
 	interp.Def("dump", 0, func(a []interface{}) interface{} {
@@ -323,8 +327,8 @@ aar mod mapcar eql rplaca terpri numberp rplacd atom null identity cddar)
 > 
 ```
 
-Several functions and macros of Lisp are defined within 
-the initialization script `Prelude`.
+Several functions and macros of Lisp are defined in the initialization script
+`Prelude`.
 It runs at the beginning of the `Main` function:
 
 ```Go
