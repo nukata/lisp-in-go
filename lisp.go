@@ -1,17 +1,13 @@
 /*
-  Nukata Lisp Light 1.42 in Go 1.7 by SUZUKI Hisao (H27.5/11 - H28.9/8)
+  Nukata Lisp 2.0 in Go 1.11 by SUZUKI Hisao (H27.05.11/H31.2.11)
 
   This is a Lisp interpreter written in Go.
-  It differs from the previous version(*1) in that all numbers are
-  64-bit floats and the whole interpreter consists of only one file.
-  It is a "light" version.
-  Intentionally it implements the same language as Nukata Lisp Light
-  1.26 in TypeScript 1.8(*2) except that it has also two concurrent
-  constructs, future and force.  See *3.
+  It is intended to implement the same language as Lisp in Dart(*1)
+  except that it has also two concurrent constructs, future and force.
+  Numbers are represented by the Number type in *2.
 
-    *1: http://www.oki-osk.jp/esc/golang/lisp3.html (in Japanese)
-    *2: http://www.oki-osk.jp/esc/typescript/lisp-en.html
-    *3: http://www.oki-osk.jp/esc/golang/lisp4-en.html
+  *1: http://github.com/nukata/lisp-in-dart
+  *2: http://github.com/nukata/goarith
 */
 package main
 
@@ -19,8 +15,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/nukata/goarith"
 	"io"
-	"math"
+	"math/big"
 	"os"
 	"regexp"
 	"runtime"
@@ -511,9 +508,9 @@ func NewInterp() *Interp {
 	interp.Def("length", 1, func(a []interface{}) interface{} {
 		switch x := a[0].(type) {
 		case *Cell:
-			return float64(x.Len())
+			return goarith.AsNumber(x.Len())
 		case string: // Each multi-bytes character counts 1.
-			return float64(utf8.RuneCountInString(x))
+			return goarith.AsNumber(utf8.RuneCountInString(x))
 		default:
 			panic(NewEvalError("list or string expected", x))
 		}
@@ -527,76 +524,89 @@ func NewInterp() *Interp {
 	})
 
 	interp.Def("numberp", 1, func(a []interface{}) interface{} {
-		if _, ok := a[0].(float64); ok {
+		if goarith.AsNumber(a[0]) != nil {
 			return true
 		}
 		return Nil
 	})
 
 	interp.Def("eql", 2, func(a []interface{}) interface{} {
-		if a[0] == a[1] { // Numbers are compared by value.  See "eq".
+		if x := goarith.AsNumber(a[0]); x != nil {
+			if y := goarith.AsNumber(a[1]); y != nil {
+				if x.Cmp(y) == 0 {
+					return true
+				}
+			}
+		} else if a[0] == a[1] {
 			return true
 		}
 		return Nil
 	})
 
 	interp.Def("<", 2, func(a []interface{}) interface{} {
-		if a[0].(float64) < a[1].(float64) {
+		if goarith.AsNumber(a[0]).Cmp(goarith.AsNumber(a[1])) < 0 {
 			return true
 		}
 		return Nil
 	})
 
 	interp.Def("%", 2, func(a []interface{}) interface{} {
-		return math.Mod(a[0].(float64), a[1].(float64))
+		_, q := goarith.AsNumber(a[0]).QuoRem(goarith.AsNumber(a[1]))
+		return q
 	})
 
 	interp.Def("mod", 2, func(a []interface{}) interface{} {
-		x, y := a[0].(float64), a[1].(float64)
-		if (x < 0 && y > 0) || (x > 0 && y < 0) {
-			return math.Mod(x, y) + y
+		x, y := goarith.AsNumber(a[0]), goarith.AsNumber(a[1])
+		zero := goarith.AsNumber(0)
+		xs, ys := x.Cmp(zero), y.Cmp(zero)
+		_, q := x.QuoRem(y)
+		if (xs < 0 && ys > 0) || (xs > 0 && ys < 0) {
+			return q.Add(y)
 		}
-		return math.Mod(x, y)
+		return q
 	})
 
 	interp.Def("+", -1, func(a []interface{}) interface{} {
-		return a[0].(*Cell).FoldL(0.0,
+		return a[0].(*Cell).FoldL(goarith.AsNumber(0),
 			func(x, y interface{}) interface{} {
-				return x.(float64) + y.(float64)
+				return goarith.AsNumber(x).Add(goarith.AsNumber(y))
 			})
 	})
 
 	interp.Def("*", -1, func(a []interface{}) interface{} {
-		return a[0].(*Cell).FoldL(1.0,
+		return a[0].(*Cell).FoldL(goarith.AsNumber(1),
 			func(x, y interface{}) interface{} {
-				return x.(float64) * y.(float64)
+				return goarith.AsNumber(x).Mul(goarith.AsNumber(y))
 			})
 	})
 
 	interp.Def("-", -2, func(a []interface{}) interface{} {
 		if a[1] == Nil {
-			return -a[0].(float64)
+			return goarith.AsNumber(0).Sub(goarith.AsNumber(a[0]))
 		} else {
-			return a[1].(*Cell).FoldL(a[0].(float64),
+			return a[1].(*Cell).FoldL(goarith.AsNumber(a[0]),
 				func(x, y interface{}) interface{} {
-					return x.(float64) - y.(float64)
+					return goarith.AsNumber(x).Sub(goarith.AsNumber(y))
 				})
 		}
 	})
 
 	interp.Def("/", -3, func(a []interface{}) interface{} {
-		return a[2].(*Cell).FoldL(a[0].(float64)/a[1].(float64),
+		q := goarith.AsNumber(a[0]).RQuo(goarith.AsNumber(a[1]))
+		return a[2].(*Cell).FoldL(q,
 			func(x, y interface{}) interface{} {
-				return x.(float64) / y.(float64)
+				return goarith.AsNumber(x).RQuo(goarith.AsNumber(y))
 			})
 	})
 
 	interp.Def("truncate", -2, func(a []interface{}) interface{} {
-		x, y := a[0].(float64), a[1].(*Cell)
+		x, y := goarith.AsNumber(a[0]), a[1].(*Cell)
 		if y == Nil {
-			return math.Trunc(x)
+			q, _ := x.QuoRem(goarith.AsNumber(1))
+			return q
 		} else if y.Cdr == Nil {
-			return math.Trunc(x / y.Car.(float64))
+			q, _ := x.QuoRem(goarith.AsNumber(y.Car))
+			return q
 		} else {
 			panic("one or two arguments expected")
 		}
@@ -618,13 +628,13 @@ func NewInterp() *Interp {
 	})
 
 	gensymCounterSym := NewSym("*gensym-counter*")
-	interp.SetGlobalVar(gensymCounterSym, 1.0)
+	interp.SetGlobalVar(gensymCounterSym, goarith.AsNumber(1))
 	interp.Def("gensym", 0, func(a []interface{}) interface{} {
 		interp.lock.Lock()
 		defer interp.lock.Unlock()
-		x := interp.globals[gensymCounterSym].(float64)
-		interp.globals[gensymCounterSym] = x + 1.0
-		return &Sym{fmt.Sprintf("G%d", int(x)), false}
+		x := goarith.AsNumber(interp.globals[gensymCounterSym])
+		interp.globals[gensymCounterSym] = x.Add(goarith.AsNumber(1))
+		return &Sym{fmt.Sprintf("G%s", x.String()), false}
 	})
 
 	interp.Def("make-symbol", 1, func(a []interface{}) interface{} {
@@ -645,8 +655,8 @@ func NewInterp() *Interp {
 	})
 
 	interp.Def("exit", 1, func(a []interface{}) interface{} {
-		n := int(a[0].(float64))
-		os.Exit(n)
+		n := (goarith.AsNumber(a[0])).(goarith.Int32)
+		os.Exit(int(n))
 		return Nil // *not reached*
 	})
 
@@ -681,12 +691,12 @@ func NewInterp() *Interp {
 
 	interp.SetGlobalVar(NewSym("*version*"),
 		&Cell{
-			1.42,
+			goarith.AsNumber(2.0),
 			&Cell{
 				fmt.Sprintf("%s %s/%s",
 					runtime.Version(), runtime.GOOS, runtime.GOARCH),
 				&Cell{
-					"Nukata Lisp Light",
+					"Nukata Lisp",
 					Nil}}})
 	// named after Nukata-gun (額田郡) in Tōkai-dō Mikawa-koku (東海道 三河国)
 
@@ -1355,8 +1365,7 @@ func (rr *Reader) readToken() {
 		rr.token = s
 		return
 	}
-	f, err := strconv.ParseFloat(s, 64) // Try to read s as a float64.
-	if err == nil {
+	if f, ok := tryToReadNumber(s); ok {
 		rr.token = f
 		return
 	}
@@ -1369,6 +1378,17 @@ func (rr *Reader) readToken() {
 	}
 	rr.token = NewSym(s)
 	return
+}
+
+func tryToReadNumber(s string) (goarith.Number, bool) {
+	z := new(big.Int)
+	if _, ok := z.SetString(s, 0); ok {
+		return goarith.AsNumber(z), true
+	}
+	if f, err := strconv.ParseFloat(s, 64); err == nil {
+		return goarith.AsNumber(f), true
+	}
+	return nil, false
 }
 
 // tokenPat is a regular expression to split a line to Lisp tokens.
@@ -1742,6 +1762,7 @@ var Prelude = strings.Replace(`
 
 /*
   Copyright (c) 2015, 2016 OKI Software Co., Ltd.
+  Copyright (c) 2019 SUZUKI Hisao
 
   Permission is hereby granted, free of charge, to any person obtaining a
   copy of this software and associated documentation files (the "Software"),

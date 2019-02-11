@@ -1,13 +1,12 @@
-# Lisp in Go (with float64 only)
+# Lisp in Go
 
 This is a Lisp interpreter compatible with
-[lisp-in-dart](https://github.com/nukata/lisp-in-dart)
-except for numeric types:  all numbers are `float64`.
-So it is a _light_ version in a sense.
-I wrote it two years ago (2016) in Go 1.6 and 1.7.
+[lisp-in-dart](https://github.com/nukata/lisp-in-dart).
+
+I wrote the original version three years ago (2016) in Go 1.6 and 1.7.
 It had been presented under the MIT License at
-<http://www.oki-osk.jp/esc/golang/lisp4-en.html> (broken link)
-until last spring (2017).
+<http://www.oki-osk.jp/esc/golang/lisp4-en.html> (broken link) until 2017.
+Now I revised it to use [goarith](https://github.com/nukata/goarith).
 
 Just as lisp-in-dart, this is a Lisp-1 with TCO (tail call optimization)
 and partially hygienic macros but being a subset of Common Lisp
@@ -35,13 +34,13 @@ $ ./lisp
 > (+ 5 6)
 11
 > *version*
-(1.42 "go1.10.1 darwin/amd64" "Nukata Lisp Light")
+(2.0 "go1.11.5 darwin/amd64" "Nukata Lisp")
 > (exit 0)
 $
 ```
 
 The value of `*version*` will vary depending on the Go compiler.
-See [lisp.go L682-L691](lisp.go#L682-L691).
+See [lisp.go L692-L701](lisp.go#L692-L701).
 
 You can give the `lisp` command a file name of your Lisp script.
 If you put a "`-`" after the file name, it will
@@ -60,7 +59,7 @@ $ ./lisp fib.l -
 > (fib 20)
 6765
 > (setq f (future (fib 30)))
-#<future:0xc420078060:(<nil> . <nil>):&{0 0}>
+#<future:0xc00006e060:(<nil> . <nil>):&{0 0}>
 > (force f)
 832040
 > (exit 0)
@@ -73,4 +72,4 @@ and the result was retrieved by `force`.
 ## License
 
 This is under the MIT License.
-See [`lisp.go L1743-L1763`](lisp.go#L1743-L1763).
+See [`lisp.go L1763-L1784`](lisp.go#L1763-L1784).

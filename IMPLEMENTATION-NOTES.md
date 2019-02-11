@@ -6,9 +6,7 @@
 
 The Lisp implementation of [lisp.go](lisp.go) is a translation of lisp.dart 
 at [lisp-in-dart](https://github.com/nukata/lisp-in-dart).
-For simplicity of Go, lisp.go restricts numbers in Lisp to `float64` only,
-while it provides `future` and `force` for concurrent computation with
-_goroutines_.
+It provides `future` and `force` for concurrent computation with _goroutines_.
 
 Below is an example of running lisp.go.
 If you have a Go compiler, you can try Lisp right away without any preparations.
@@ -93,29 +91,6 @@ aif
 
 ----------------------------------------
 
-A restriction of lisp.go compared to lisp.dart is
-
-
-- All numbers are represented by double precision floating point numbers
-  (`float64` in Go).
-
-
-----------------------------------------
-
-**Note:**
-That is why I call it _Light_.
-Maybe I should call it _Lite_, but I followed the usage of _Light_
-in the famous [Caml Light](http://caml.inria.fr/caml-light/).
-
-
-```
-> *version*
-(1.42 "go1.10.1 darwin/amd64" "Nukata Lisp Light")
-> 
-```
-
-----------------------------------------
-
 In addition, there is a feature inherited from
 [my first Go Lisp in 2013](https://github.com/pkelchte/tiny-lisp):
 
@@ -161,7 +136,7 @@ They are all treated as `interface{}` uniformly.
 
 | Lisp Expression                     | Internal Representation                |
 |:------------------------------------|:---------------------------------------|
-| numbers `1`, `2.3`                  | `float64`                              |
+| numbers `1`, `2.3`                  | [`goarith.Number`](https://github.com/nukata/goarith) |
 | strings `"abc"`, `"hello!\n"`       | `string`                               |
 | `t`                                 | `true`                                 |
 | `nil`                               | `nil` of `*Cell`                       |
