@@ -1,5 +1,5 @@
 /*
-  Nukata Lisp 2.0 in Go 1.11 by SUZUKI Hisao (H27.05.11/H31.2.11)
+  Nukata Lisp 2.0 in Go 1.11 by SUZUKI Hisao (H27.05.11/H31.2.13)
 
   This is a Lisp interpreter written in Go.
   It is intended to implement the same language as Lisp in Dart(*1)
@@ -454,6 +454,9 @@ func (interp *Interp) SetGlobalVar(sym *Sym, val interface{}) {
 	interp.lock.Unlock()
 }
 
+var Number0 = goarith.AsNumber(0)
+var Number1 = goarith.AsNumber(1)
+
 // NewInterp constructs an interpreter and sets built-in functions etc. as
 // the global values of symbols within the interpreter.
 func NewInterp() *Interp {
@@ -531,14 +534,15 @@ func NewInterp() *Interp {
 	})
 
 	interp.Def("eql", 2, func(a []interface{}) interface{} {
+		if a[0] == a[1] {
+			return true
+		}
 		if x := goarith.AsNumber(a[0]); x != nil {
 			if y := goarith.AsNumber(a[1]); y != nil {
 				if x.Cmp(y) == 0 {
 					return true
 				}
 			}
-		} else if a[0] == a[1] {
-			return true
 		}
 		return Nil
 	})
@@ -557,8 +561,7 @@ func NewInterp() *Interp {
 
 	interp.Def("mod", 2, func(a []interface{}) interface{} {
 		x, y := goarith.AsNumber(a[0]), goarith.AsNumber(a[1])
-		zero := goarith.AsNumber(0)
-		xs, ys := x.Cmp(zero), y.Cmp(zero)
+		xs, ys := x.Cmp(Number0), y.Cmp(Number0)
 		_, q := x.QuoRem(y)
 		if (xs < 0 && ys > 0) || (xs > 0 && ys < 0) {
 			return q.Add(y)
@@ -567,14 +570,14 @@ func NewInterp() *Interp {
 	})
 
 	interp.Def("+", -1, func(a []interface{}) interface{} {
-		return a[0].(*Cell).FoldL(goarith.AsNumber(0),
+		return a[0].(*Cell).FoldL(Number0,
 			func(x, y interface{}) interface{} {
 				return goarith.AsNumber(x).Add(goarith.AsNumber(y))
 			})
 	})
 
 	interp.Def("*", -1, func(a []interface{}) interface{} {
-		return a[0].(*Cell).FoldL(goarith.AsNumber(1),
+		return a[0].(*Cell).FoldL(Number1,
 			func(x, y interface{}) interface{} {
 				return goarith.AsNumber(x).Mul(goarith.AsNumber(y))
 			})
@@ -582,7 +585,7 @@ func NewInterp() *Interp {
 
 	interp.Def("-", -2, func(a []interface{}) interface{} {
 		if a[1] == Nil {
-			return goarith.AsNumber(0).Sub(goarith.AsNumber(a[0]))
+			return Number0.Sub(goarith.AsNumber(a[0]))
 		} else {
 			return a[1].(*Cell).FoldL(goarith.AsNumber(a[0]),
 				func(x, y interface{}) interface{} {
@@ -602,7 +605,7 @@ func NewInterp() *Interp {
 	interp.Def("truncate", -2, func(a []interface{}) interface{} {
 		x, y := goarith.AsNumber(a[0]), a[1].(*Cell)
 		if y == Nil {
-			q, _ := x.QuoRem(goarith.AsNumber(1))
+			q, _ := x.QuoRem(Number1)
 			return q
 		} else if y.Cdr == Nil {
 			q, _ := x.QuoRem(goarith.AsNumber(y.Car))
@@ -628,12 +631,12 @@ func NewInterp() *Interp {
 	})
 
 	gensymCounterSym := NewSym("*gensym-counter*")
-	interp.SetGlobalVar(gensymCounterSym, goarith.AsNumber(1))
+	interp.SetGlobalVar(gensymCounterSym, Number1)
 	interp.Def("gensym", 0, func(a []interface{}) interface{} {
 		interp.lock.Lock()
 		defer interp.lock.Unlock()
 		x := goarith.AsNumber(interp.globals[gensymCounterSym])
-		interp.globals[gensymCounterSym] = x.Add(goarith.AsNumber(1))
+		interp.globals[gensymCounterSym] = x.Add(Number1)
 		return &Sym{fmt.Sprintf("G%s", x.String()), false}
 	})
 
@@ -655,7 +658,10 @@ func NewInterp() *Interp {
 	})
 
 	interp.Def("exit", 1, func(a []interface{}) interface{} {
-		n := (goarith.AsNumber(a[0])).(goarith.Int32)
+		n, exact := goarith.AsNumber(a[0]).Int()
+		if !exact {
+			panic("int expected")
+		}
 		os.Exit(int(n))
 		return Nil // *not reached*
 	})

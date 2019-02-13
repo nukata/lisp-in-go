@@ -44,7 +44,7 @@ $
 ```
 
 The value of `*version*` will vary depending on the Go compiler.
-See [lisp.go L692-L701](lisp.go#L692-L701).
+See [lisp.go L698-L707](lisp.go#L698-L707).
 
 You can give the `lisp` command a file name of your Lisp script.
 If you put a "`-`" after the file name, it will
@@ -76,4 +76,4 @@ and the result was retrieved by `force`.
 ## License
 
 This is under the MIT License.
-See [`lisp.go L1763-L1784`](lisp.go#L1763-L1784).
+See [`lisp.go L1769-L1790`](lisp.go#L1769-L1790).
