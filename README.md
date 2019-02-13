@@ -29,8 +29,12 @@ See [IMPLEMENTATION-NOTES.md](IMPLEMENTATION-NOTES.md) for the implementation.
 ## How to run
 
 ```
-$ go build lisp.go
-$ ./lisp
+$ pwd
+/Users/suzuki/tmp/lisp-in-go
+$ go build
+go: finding github.com/nukata/goarith v0.2.0
+go: downloading github.com/nukata/goarith v0.2.0
+$ ./lisp-in-go
 > (+ 5 6)
 11
 > *version*
@@ -53,13 +57,13 @@ $ cat fib.l
       n
     (+ (fib (- n 1))
        (fib (- n 2)))))
-$ ./lisp fib.l -
+$ ./lisp-in-go fib.l -
 > (fib 10)
 55
 > (fib 20)
 6765
 > (setq f (future (fib 30)))
-#<future:0xc00006e060:(<nil> . <nil>):&{0 0}>
+#<future:0xc000060060:(<nil> . <nil>):&{0 0}>
 > (force f)
 832040
 > (exit 0)

@@ -9,11 +9,14 @@ at [lisp-in-dart](https://github.com/nukata/lisp-in-dart).
 It provides `future` and `force` for concurrent computation with _goroutines_.
 
 Below is an example of running lisp.go.
-If you have a Go compiler, you can try Lisp right away without any preparations.
 
 ```
-$ go build lisp.go
-$ ./lisp
+$ pwd
+/Users/suzuki/tmp/lisp-in-go
+$ go build
+go: finding github.com/nukata/goarith v0.2.0
+go: downloading github.com/nukata/goarith v0.2.0
+$ ./lisp-in-go
 > (+ 5 6)
 11
 > (exit 0)
