@@ -1,20 +1,26 @@
 # Lisp in Go
 
 This is a Lisp interpreter compatible with
-[lisp-in-dart](https://github.com/nukata/lisp-in-dart).
+[lisp-in-dart](https://github.com/nukata/lisp-in-dart) and
+[lisp-in-cs](https://github.com/nukata/lisp-in-cs).
 
-I wrote the original version three years ago (2016) in Go 1.6 and 1.7.
+In 2016, I wrote the original version in Go 1.6 and 1.7.
 It had been presented under the MIT License at
 <http://www.oki-osk.jp/esc/golang/lisp4-en.html> (broken link) until 2017.
-Now I revised it to use [goarith](https://github.com/nukata/goarith).
+In 2018, I made the repository in GitHub.
+Now, in 2019, I revised it to make use of
+[goarith](https://github.com/nukata/goarith), which
+implements mixed mode arithmetic of `int32`, `int64`, `float64` and `*big.Int`.
 
-Just as lisp-in-dart, this is a Lisp-1 with TCO (tail call optimization)
+Just as `lisp-in-dart` and `lisp-in-cs`,
+this is a Lisp-1 with TCO (tail call optimization)
 and partially hygienic macros but being a subset of Common Lisp
 in a loose meaning.
 It is easy to write a nontrivial script which runs both in this and in
 Common Lisp.
 Examples are found in 
-[lisp-in-dart/examples](http://github.com/nukata/lisp-in-dart/tree/master/examples).
+[lisp-in-cs#examples](https://github.com/nukata/lisp-in-cs#examples).
+
 
 In addition, this has two concurrent constructs implemented with _goroutine_,
 `future` and `force`, which I reported in 2013 at
@@ -32,13 +38,14 @@ See [IMPLEMENTATION-NOTES.md](IMPLEMENTATION-NOTES.md) for the implementation.
 $ pwd
 /Users/suzuki/tmp/lisp-in-go
 $ go build
-go: finding github.com/nukata/goarith v0.2.0
-go: downloading github.com/nukata/goarith v0.2.0
+go: downloading github.com/nukata/goarith v0.3.0
+go: extracting github.com/nukata/goarith v0.3.0
+go: finding github.com/nukata/goarith v0.3.0
 $ ./lisp-in-go
 > (+ 5 6)
 11
 > *version*
-(2.0 "go1.11.5 darwin/amd64" "Nukata Lisp")
+(2.0 "go1.13.3 darwin/amd64" "Nukata Lisp")
 > (exit 0)
 $
 ```
